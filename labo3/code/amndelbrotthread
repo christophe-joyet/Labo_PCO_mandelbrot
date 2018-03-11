@@ -1,0 +1,11 @@
+#ifndef SUBQTHREAD_H
+#define SUBQTHREAD_H
+
+
+class SubQThread : public
+{
+public:
+    SubQThread();
+};
+
+#endif // SUBQTHREAD_H
