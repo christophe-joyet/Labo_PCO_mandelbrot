@@ -135,6 +135,13 @@ void RenderThread::run()
         while (pass < NumPasses) { //calcul un nombre d'itération maximum
             QImage image(resultSize, QImage::Format_RGB32); //déclaration de l'image à l'intérieur de la boucle while pour éviter les problèmes de concurrence
 
+            //si on ferme la fenêtre, on doit attendre la fin d'execution de chaque thread
+            if(abort){
+                 for(threadIterator=0; threadIterator<NBR_THREAD; threadIterator++)
+                     threads[threadIterator]->wait();
+                 return;
+            }
+
             const int MaxIterations = (1 << (2 * pass + 6)) + 32;
 
             //initialisation des attributs des threads
@@ -168,7 +175,10 @@ void RenderThread::run()
             condition.wait(&mutex);
         restart = false;
         mutex.unlock();
+
     }
+
+
 }
 
 uint RenderThread::rgbFromWaveLength(double wave)
