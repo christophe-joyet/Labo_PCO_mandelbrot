@@ -37,12 +37,36 @@ private:
 
 
 public:
+
+    /**
+     * @brief mandelbrotthread : constructeur du thread
+     * @param int    - halfHeight
+     * @param int    - halfWidth
+     * @param bool*  - restart
+     * @param bool*  - abort
+     * @param QSize  - resultSize
+     * @param double - scaleFactor
+     * @param double - centerX
+     * @param double - centerY
+     * @param uint*  - colormap
+     * @param int    - ColormapSize
+     * @param int    - y_low
+     * @param int    - y_high
+     */
     mandelbrotthread(int halfHeight, int halfWidth, bool* restart, bool* abort,
                      QSize resultSize, double scaleFactor, double centerX, double centerY,
                      uint* colormap, int ColormapSize,int y_low, int y_high);
 
+    /**
+     * @brief setMaxIteration : Donne une valeur à l'attribut maxIteration
+     * @param int - MaxIterations
+     */
     void setMaxIteration(int MaxIterations);
 
+    /**
+     * @brief setImage : permet à chaque thread d'avoir un pointeur vers l'image
+     * @param QImage - image : image de mandelbrot
+     */
     void setImage(QImage *image);
 
     /**

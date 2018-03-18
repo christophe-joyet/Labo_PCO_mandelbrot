@@ -14,7 +14,7 @@ mandelbrotthread::mandelbrotthread(int halfHeight, int halfWidth, bool* restart,
     this->scaleFactor   = scaleFactor;
     this->centerX       = centerX;
     this->centerY       = centerY;
-    this->MaxIterations = 0;//sera initialisé dans la boucle
+    this->MaxIterations = 0;       //sera initialisé dans la boucle
     this->colormap      = colormap;
     this->ColormapSize  = ColormapSize;
     this->y_high        = y_high; //délimite la partie que le thread doit afficher
@@ -31,11 +31,13 @@ void mandelbrotthread::setImage(QImage *image){
     this->image = image;
 }
 
+//méthode appellée suite à l'appelle de la fonction start() d'un thread
 void mandelbrotthread::run()
 {
 
     const int Limit = 4;
-//ici on délimite l'image que le thread va afficher (faudrait inverser high et low du coup ^^)
+
+    //ici on délimite l'image que le thread va afficher grâce aux valeur y_low et y_high
     for (int y = y_low; y < y_high; ++y) {
         if (*restart)
             break;

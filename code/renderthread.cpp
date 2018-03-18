@@ -46,6 +46,8 @@
 #include <math.h>
 #include <iostream>
 
+#define NBR_THREAD      4
+
 RenderThread::RenderThread(QObject *parent)
     : QThread(parent)
 {
@@ -86,6 +88,9 @@ void RenderThread::render(double centerX, double centerY, double scaleFactor,
 
 void RenderThread::run()
 {
+    //Affiche le nombre ideal de thread qui peuvent tourner sur le système en cours
+    std::cout << "Nombre de thread(s) ideal(s) pour votre machine = " << idealThreadCount() << std::endl;
+
     forever {
         mutex.lock();
         QSize resultSize   = this->resultSize;
@@ -101,59 +106,61 @@ void RenderThread::run()
         int pass = 0;
         QImage image(resultSize, QImage::Format_RGB32);
 
-        //déclarer le thread avant le while -> évite qu'il soit une variable locale à la boucle et soit supprimé à la fin du bloc
-        mandelbrotthread thread1(halfHeight, halfWidth, &restart, &abort,
-                                 resultSize, scaleFactor, centerX, centerY,
-                                 colormap, ColormapSize, halfHeight/2, halfHeight);
-        mandelbrotthread thread2(halfHeight, halfWidth, &restart, &abort,
-                                 resultSize, scaleFactor, centerX, centerY,
-                                 colormap, ColormapSize, 0, halfHeight);
-        mandelbrotthread thread3(halfHeight, halfWidth, &restart, &abort,
-                                 resultSize, scaleFactor, centerX, centerY,
-                                 colormap, ColormapSize, -halfHeight/2, 0);
-        mandelbrotthread thread4(halfHeight, halfWidth, &restart, &abort,
-                                 resultSize, scaleFactor, centerX, centerY,
-                                 colormap, ColormapSize,-halfHeight, -halfHeight/2);
+        //Séparation de la taille d'une image pour chaque thread.
+        mandelbrotthread* threads[NBR_THREAD];
+        int dividedHeight = resultSize.height() / NBR_THREAD; //on divise la hauteur en fonction du nombre de thread
+        int heightCounter = -halfHeight;
+        int threadIterator;
+
+        //déclarer les thread avant le while -> évite qu'ils soient une variable locale à la boucle et soient supprimés à la fin du bloc
+        for(threadIterator = 0; threadIterator < NBR_THREAD; threadIterator++){
+            threads[threadIterator] =
+                    new mandelbrotthread(halfHeight,
+                                         halfWidth,
+                                         &restart,
+                                         &abort,
+                                         resultSize,
+                                         scaleFactor,
+                                         centerX,
+                                         centerY,
+                                         colormap,
+                                         ColormapSize,
+                                         heightCounter,
+                                         (heightCounter + dividedHeight));
+
+            heightCounter += dividedHeight;
+        }
 
 
         while (pass < NumPasses) { //calcul un nombre d'itération maximum
-            QImage image(resultSize, QImage::Format_RGB32); //on déplace image à l'intérieur de la boucle while -> mail du prof
+            QImage image(resultSize, QImage::Format_RGB32); //déclaration de l'image à l'intérieur de la boucle while pour éviter les problèmes de concurrence
 
             const int MaxIterations = (1 << (2 * pass + 6)) + 32;
-            //initialisation des attributs de mes threads
-            thread1.setMaxIteration(MaxIterations);
-            thread2.setMaxIteration(MaxIterations);
-            thread3.setMaxIteration(MaxIterations);
-            thread4.setMaxIteration(MaxIterations);
-            thread1.setImage(&image);
-            thread2.setImage(&image);
-            thread3.setImage(&image);
-            thread4.setImage(&image);
 
-            //envoyer sur les différents thread....début
+            //initialisation des attributs des threads
+            for(threadIterator=0; threadIterator<NBR_THREAD; threadIterator++){
+                threads[threadIterator]->setMaxIteration(MaxIterations);
+                threads[threadIterator]->setImage(&image);
+            }
 
+            QTime startTime = QTime::currentTime();
 
-            QTime startTime = QTime::currentTime();       
-          //début des thread 1 - 4
-            thread1.start();
-            thread2.start();
-            thread3.start();
-            thread4.start();
-            //attente des threads 1 - 4
-            thread1.wait();
-            thread2.wait();
-            thread3.wait();
+            //lancement des thread à l'aide de la méthode start() qui appellera la méthode run()
+            for(threadIterator=0; threadIterator<NBR_THREAD; threadIterator++)
+                threads[threadIterator]->start();
 
-            thread4.wait();
-            //fin threads
+            //le programme principal attend que chaque thread ait terminé ses calculs
+            for(threadIterator=0; threadIterator<NBR_THREAD; threadIterator++)
+                threads[threadIterator]->wait();
+
             QTime endTime = QTime::currentTime();
             std::cout << "Time for pass " << pass << " (in ms) : " << startTime.msecsTo(endTime) << std::endl;
+
 
                 if (!restart)
                     emit renderedImage(image, scaleFactor);
 
                 ++pass;
-         //envoyer différents threads ... fin
         }
 
         mutex.lock();
