@@ -46,8 +46,6 @@
 #include <math.h>
 #include <iostream>
 
-#define NBR_THREAD      4
-
 RenderThread::RenderThread(QObject *parent)
     : QThread(parent)
 {
@@ -88,8 +86,14 @@ void RenderThread::render(double centerX, double centerY, double scaleFactor,
 
 void RenderThread::run()
 {
-    //Affiche le nombre ideal de thread qui peuvent tourner sur le système en cours
-    std::cout << "Nombre de thread(s) ideal(s) pour votre machine = " << idealThreadCount() << std::endl;
+    //Définit le nombre ideal de thread(s) qui peuvent tourner sur le système en cours
+    int nbreThread = idealThreadCount();
+    if(nbreThread > 0){
+        std::cout << "Nombre de thread(s) ideal(s) pour votre machine = " << idealThreadCount() << std::endl;
+    }else{
+         std::cout << "Nombre de thread(s) ideal(s) non-détécé : par défaut nous mettons 1 thread" << std::endl;
+         nbreThread = 1;
+    }
 
     forever {
         mutex.lock();
@@ -107,13 +111,13 @@ void RenderThread::run()
         QImage image(resultSize, QImage::Format_RGB32);
 
         //Séparation de la taille d'une image pour chaque thread.
-        mandelbrotthread* threads[NBR_THREAD];
-        int dividedHeight = resultSize.height() / NBR_THREAD; //on divise la hauteur en fonction du nombre de thread
+        mandelbrotthread* threads[nbreThread];
+        int dividedHeight = resultSize.height() / nbreThread; //on divise la hauteur en fonction du nombre de thread
         int heightCounter = -halfHeight;
         int threadIterator;
 
         //déclarer les thread avant le while -> évite qu'ils soient une variable locale à la boucle et soient supprimés à la fin du bloc
-        for(threadIterator = 0; threadIterator < NBR_THREAD; threadIterator++){
+        for(threadIterator = 0; threadIterator < nbreThread; threadIterator++){
             threads[threadIterator] =
                     new mandelbrotthread(halfHeight,
                                          halfWidth,
@@ -137,7 +141,7 @@ void RenderThread::run()
 
             //si on ferme la fenêtre, on doit attendre la fin d'execution de chaque thread
             if(abort){
-                 for(threadIterator=0; threadIterator<NBR_THREAD; threadIterator++)
+                 for(threadIterator=0; threadIterator<nbreThread; threadIterator++)
                      threads[threadIterator]->wait();
                  return;
             }
@@ -145,7 +149,7 @@ void RenderThread::run()
             const int MaxIterations = (1 << (2 * pass + 6)) + 32;
 
             //initialisation des attributs des threads
-            for(threadIterator=0; threadIterator<NBR_THREAD; threadIterator++){
+            for(threadIterator=0; threadIterator<nbreThread; threadIterator++){
                 threads[threadIterator]->setMaxIteration(MaxIterations);
                 threads[threadIterator]->setImage(&image);
             }
@@ -153,11 +157,11 @@ void RenderThread::run()
             QTime startTime = QTime::currentTime();
 
             //lancement des thread à l'aide de la méthode start() qui appellera la méthode run()
-            for(threadIterator=0; threadIterator<NBR_THREAD; threadIterator++)
+            for(threadIterator=0; threadIterator<nbreThread; threadIterator++)
                 threads[threadIterator]->start();
 
             //le programme principal attend que chaque thread ait terminé ses calculs
-            for(threadIterator=0; threadIterator<NBR_THREAD; threadIterator++)
+            for(threadIterator=0; threadIterator<nbreThread; threadIterator++)
                 threads[threadIterator]->wait();
 
             QTime endTime = QTime::currentTime();
