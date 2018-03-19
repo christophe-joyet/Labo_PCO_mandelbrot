@@ -76,7 +76,7 @@ private:
     double centerY;
     double scaleFactor;
     QSize resultSize;
-    bool restart;
+    bool  restart;
     bool abort;
 
     enum { ColormapSize = 512 };

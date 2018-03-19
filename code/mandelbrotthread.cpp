@@ -1,6 +1,15 @@
+/**
+ * MandelBrotThread.cpp
+ * Auteurs : Marc Labie & Christophe Joyet
+ * Date    : 19.03.2018
+ */
+
 #include "mandelbrotthread.h"
 #include <QtWidgets>
 
+/**
+ * @brief Constructeur du thread
+ */
 mandelbrotthread::mandelbrotthread(int halfHeight, int halfWidth, bool* restart, bool* abort,
                  QSize resultSize, double scaleFactor, double centerX, double centerY,
                  uint* colormap, int ColormapSize, int y_low, int y_high)
@@ -21,23 +30,32 @@ mandelbrotthread::mandelbrotthread(int halfHeight, int halfWidth, bool* restart,
     this->y_low         = y_low;
 }
 
-//permet d'instancier MaxIteration à l'intérieur de la boucle
+/**
+ * @brief setMaxIteration : Donner une valeur à l'attribut MaxIterations
+ * @param MaxIterations   : int
+ */
 void mandelbrotthread::setMaxIteration(int MaxIterations){
     this->MaxIterations = MaxIterations;
 }
 
-//permet d'instancier l'image à l'intérieur de la boucle
+/**
+ * @brief setImage  : Donner une pointeur sur une QImage
+ * @param image     : pointeur sur une QImage
+ */
 void mandelbrotthread::setImage(QImage *image){
     this->image = image;
 }
 
-//méthode appellée suite à l'appelle de la fonction start() d'un thread
+
+/**
+ * @brief run   : Méthode appelée par start() pour lancer un thread
+ */
 void mandelbrotthread::run()
 {
 
     const int Limit = 4;
 
-    //ici on délimite l'image que le thread va afficher grâce aux valeur y_low et y_high
+    //ici on délimite l'image que le thread va afficher grâce aux valeurs y_low et y_high
     for (int y = y_low; y < y_high; ++y) {
         if (*restart)
             break;

@@ -1,3 +1,9 @@
+/**
+ * MandelBrotThread.h
+ * Auteurs : Marc Labie & Christophe Joyet
+ * Date    : 19.03.2018
+ */
+
 #ifndef MANDELBROTTHREAD_H
 #define MANDELBROTTHREAD_H
 #include <QMutex>

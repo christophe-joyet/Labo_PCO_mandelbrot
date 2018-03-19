@@ -86,12 +86,12 @@ void RenderThread::render(double centerX, double centerY, double scaleFactor,
 
 void RenderThread::run()
 {
-    //Définit le nombre ideal de thread(s) qui peuvent tourner sur le système en cours
-    int nbreThread = idealThreadCount();
+    //Définit le nombre ideal de threads qui peuvent tourner sur le système en cours
+    int nbreThread = QThread::idealThreadCount();
     if(nbreThread > 0){
-        std::cout << "Nombre de thread(s) ideal(s) pour votre machine = " << idealThreadCount() << std::endl;
+        std::cout << "Nombre de thread(s) ideals pour votre machine = " << nbreThread << std::endl;
     }else{
-         std::cout << "Nombre de thread(s) ideal(s) non-détécé : par défaut nous mettons 1 thread" << std::endl;
+         std::cout << "Nombre de threads ideals non-détécé : par défaut -> 1 thread" << std::endl;
          nbreThread = 1;
     }
 
@@ -108,15 +108,14 @@ void RenderThread::run()
 
         const int NumPasses = 8;
         int pass = 0;
-        QImage image(resultSize, QImage::Format_RGB32);
 
-        //Séparation de la taille d'une image pour chaque thread.
+        //Calcul de la taille d'une image pour chaque thread.
         mandelbrotthread* threads[nbreThread];
-        int dividedHeight = resultSize.height() / nbreThread; //on divise la hauteur en fonction du nombre de thread
+        int dividedHeight = resultSize.height() / nbreThread; //on divise la hauteur en fonction du nombre de threads détéctés
         int heightCounter = -halfHeight;
         int threadIterator;
 
-        //déclarer les thread avant le while -> évite qu'ils soient une variable locale à la boucle et soient supprimés à la fin du bloc
+        //déclarer les threads avant le while -> évite qu'ils soient une variable locale à la boucle et soient supprimés à la fin du bloc
         for(threadIterator = 0; threadIterator < nbreThread; threadIterator++){
             threads[threadIterator] =
                     new mandelbrotthread(halfHeight,
@@ -136,7 +135,7 @@ void RenderThread::run()
         }
 
 
-        while (pass < NumPasses) { //calcul un nombre d'itération maximum
+        while (pass < NumPasses) { //calcul un nombre d'itérations maximumes
             QImage image(resultSize, QImage::Format_RGB32); //déclaration de l'image à l'intérieur de la boucle while pour éviter les problèmes de concurrence
 
             //si on ferme la fenêtre, on doit attendre la fin d'execution de chaque thread
@@ -148,7 +147,7 @@ void RenderThread::run()
 
             const int MaxIterations = (1 << (2 * pass + 6)) + 32;
 
-            //initialisation des attributs des threads
+            //initialisation des attributs MaxIteration et *image des threads
             for(threadIterator=0; threadIterator<nbreThread; threadIterator++){
                 threads[threadIterator]->setMaxIteration(MaxIterations);
                 threads[threadIterator]->setImage(&image);
