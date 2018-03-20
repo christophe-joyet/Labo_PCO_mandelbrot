@@ -86,13 +86,16 @@ void RenderThread::render(double centerX, double centerY, double scaleFactor,
 
 void RenderThread::run()
 {
-    //Définit le nombre ideal de threads qui peuvent tourner sur le système en cours
+    // Définit le nombre ideal de threads qui peuvent tourner sur le système
+    // en cours.
     int nbreThread = QThread::idealThreadCount();
     if(nbreThread > 0){
-        std::cout << "Nombre de thread(s) ideals pour votre machine = " << nbreThread << std::endl;
+        std::cout << "Nombre de thread(s) ideals pour votre machine = "
+                  << nbreThread << std::endl;
     }else{
-         std::cout << "Nombre de threads ideals non-détécé : par défaut -> 1 thread" << std::endl;
-         nbreThread = 1;
+        std::cout << "Nombre de threads ideals non-détécé : par défaut -> 1 thread"
+                  << std::endl;
+        nbreThread = 1;
     }
 
     forever {
@@ -111,11 +114,16 @@ void RenderThread::run()
 
         //Calcul de la taille d'une image pour chaque thread.
         mandelbrotthread* threads[nbreThread];
-        int dividedHeight = resultSize.height() / nbreThread; //on divise la hauteur en fonction du nombre de threads détéctés
+
+        // on divise la hauteur en fonction du nombre de threads détéctés. Cela
+        // nous permettra de répartir l'image à calculer de manière équilavente
+        // entre chaque thread.
+        int dividedHeight = resultSize.height() / nbreThread;
         int heightCounter = -halfHeight;
         int threadIterator;
 
-        //déclarer les threads avant le while -> évite qu'ils soient une variable locale à la boucle et soient supprimés à la fin du bloc
+        // déclarer les threads avant le while -> évite qu'ils soient une
+        // variable locale à la boucle et soient supprimés à la fin du bloc
         for(threadIterator = 0; threadIterator < nbreThread; threadIterator++){
             threads[threadIterator] =
                     new mandelbrotthread(halfHeight,
@@ -136,13 +144,24 @@ void RenderThread::run()
 
 
         while (pass < NumPasses) { //calcul un nombre d'itérations maximumes
-            QImage image(resultSize, QImage::Format_RGB32); //déclaration de l'image à l'intérieur de la boucle while pour éviter les problèmes de concurrence
+            // déclaration de l'image à l'intérieur de la boucle while pour
+            // éviter les problèmes de concurrence
+            QImage image(resultSize, QImage::Format_RGB32);
 
-            //si on ferme la fenêtre, on doit attendre la fin d'execution de chaque thread
+            // si on ferme la fenêtre, on doit attendre la fin d'execution de
+            // chaque mandlebrotthread -> wait() appelé dans le destructeur
             if(abort){
                  for(threadIterator=0; threadIterator<nbreThread; threadIterator++)
-                     threads[threadIterator]->wait();
+                     delete threads[threadIterator];
                  return;
+            }
+
+            // si on redéfinis la zone à calculer, on doit aussi attendre la fin
+            // d'execution de chaque mandlebrotthread
+            if(restart){
+                 for(threadIterator=0; threadIterator<nbreThread; threadIterator++)
+                     delete threads[threadIterator];
+                 break;
             }
 
             const int MaxIterations = (1 << (2 * pass + 6)) + 32;
@@ -155,16 +174,19 @@ void RenderThread::run()
 
             QTime startTime = QTime::currentTime();
 
-            //lancement des thread à l'aide de la méthode start() qui appellera la méthode run()
+            // lancement des thread à l'aide de la méthode start() qui appellera
+            // la méthode run()
             for(threadIterator=0; threadIterator<nbreThread; threadIterator++)
                 threads[threadIterator]->start();
 
-            //le programme principal attend que chaque thread ait terminé ses calculs
+            // le programme principal attend que chaque thread ait terminé ses
+            // calculs
             for(threadIterator=0; threadIterator<nbreThread; threadIterator++)
                 threads[threadIterator]->wait();
 
             QTime endTime = QTime::currentTime();
-            std::cout << "Time for pass " << pass << " (in ms) : " << startTime.msecsTo(endTime) << std::endl;
+            std::cout << "Time for pass " << pass << " (in ms) : "
+                      << startTime.msecsTo(endTime) << std::endl;
 
 
                 if (!restart)
